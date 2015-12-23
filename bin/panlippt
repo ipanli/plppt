@@ -1,0 +1,123 @@
+#!/usr/bin/env node
+
+var fs = require('fs');
+var path = require('path');
+var panliPPT = require('../lib/panliPPT');
+var versions = require('../package').version;
+var program = require('commander');
+var ipv4 = require('ipv4');
+if (process.argv[2] && process.argv[2] === '-v') {
+    process.argv[2] = '-V';
+}
+program
+    .version(versions);
+
+program
+    .command('create')
+    .alias('new')
+    .usage('[filename] [option]')
+    .description('create a slide')
+    .option('-d, --dir [path]', 'set slide file destination path')
+    .action(function (filename, options) {
+        if (typeof filename === 'object') {
+            console.log('ERROR: please input filename！'.bold.red);
+            this.outputHelp();
+            return;
+        }
+
+        panliPPT.create(filename, options)
+    }).on('--help', function () {
+        console.log('  Examples:');
+        console.log();
+        console.log('  panlippt create myslide');
+        console.log('  panlippt create myslide -d D:/webppt');
+        console.log();
+    });
+
+program
+    .command('generate')
+    .alias('release')
+    .usage('[file_path] [save_path]')
+    .description('export html file')
+    .option('-a, --all [false]', 'output all style(include js,css) file', false)
+    .action(function (cmd, output, options) {
+        var filename = '';
+        var shouldAll = false;
+        if (typeof output !== 'string') {
+            options = output;
+            output = undefined;
+        }
+        if (typeof cmd === 'string') {
+            filename = cmd;
+            shouldAll = options.all;
+        } else if (typeof cmd === 'object') {
+            shouldAll = cmd.all;
+            output = cmd.output;
+        }
+        panliPPT.generate(filename, output, shouldAll, '');
+    })
+    .on('--help', function () {
+        console.log('  Examples:');
+        console.log();
+        console.log('  panlippt generate D:/webppt/demo.md -o D:/output');
+        console.log('  panlippt generate D:/webppt/ -o D:/output -a');
+        console.log();
+    });
+
+
+program
+    .command('start')
+    .description('start local sever show slide')
+    .option('-d, --dir [dir]', 'set slide path', '')
+    .option('-p, --port [port]', 'set server port ', 8080)
+    .option('-c, --controller [socket]', 'support websocket mutil screen controller')
+    .option('-H, --host [host]', 'set host address', ipv4 || '0.0.0.0')
+    .option('-w, --watch', 'livereload')
+    .action(function (cmd) {
+        if (typeof cmd !== 'object') {
+            this.outputHelp();
+            return;
+        }
+
+        panliPPT.start(cmd)
+    })
+    .on('--help', function () {
+        console.log('  Examples:');
+        console.log();
+        console.log('  panlippt start -d D:/webppt -p 8080');
+        console.log('  panlippt start -d D:/webppt -c socket');
+        console.log();
+    });
+
+
+
+program
+    .command('pdf')
+    .usage('[http_url] [save_path.pdf]')
+    .description('export pdf file. ' + 'Deprecated'.bold.red)
+    .action(function (http_url, save_path) {
+        if (typeof http_url !== 'string' || typeof save_path !== 'string') {
+            console.log('ERROR: pdf need a URL'.bold.red);
+            this.outputHelp();
+            return;
+        }
+        console.log('  Warning: '.bold.red + 'This command is ' + 'Deprecated'.bold.red);
+        panliPPT.pdf([http_url, save_path])
+    })
+    .on('--help', function () {
+        console.log('  Examples:');
+        console.log();
+        console.log('  panlippt pdf http://127.0.0.1:8080/md/demo.md demo.pdf\n');
+        console.log('  Warning: '.bold.red + 'This command is ' + 'Deprecated'.bold.red);
+        console.log();
+    });
+
+
+
+program.parse(process.argv);
+
+
+if (!program.args[0]) {
+    process.stdout.write(program.helpInformation());
+    program.emit('--help');
+}

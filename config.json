@@ -1,0 +1,7 @@
+{
+    "url": "http://ppt.nnn.li",
+    "speaker": "plppt demo",
+    "assetsDir": "./assets",
+    "pptDir": "./ppts",
+    "port": 8080
+}
